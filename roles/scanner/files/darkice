@@ -1,0 +1,77 @@
+#! /bin/sh
+### BEGIN INIT INFO
+# Provides:          darkice
+# Required-Start:    alsa-utils $local_fs $remote_fs $network
+# Required-Stop:     alsa-utils $local_fs $remote_fs $network
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: darkice streamer
+# Description:       Darkice will take an ALSA audio input and send it to 
+#                    a streaming server.
+### END INIT INFO
+
+# Author: Matt Rockwell <matt@mattrock.net>
+# minor changes Feb2013 by  <glyman3@gmail.com>
+#  File: /etc/init.d/darkice
+
+# PATH should only include /usr/* if it runs after the mountnfs.sh script
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+DESC="darkice"
+NAME=darkice
+DAEMON=/usr/bin/$NAME
+PIDFILE=/var/run/$NAME.pid
+SCRIPTNAME=/etc/init.d/$NAME
+CONFIGFILE=/etc/darkice.cfg
+
+# Exit if the package is not installed
+[ -x "$DAEMON" ] || exit 0
+
+# Read configuration variable file if it is present
+[ -r /etc/default/$NAME ] && . /etc/default/$NAME
+
+# Load the VERBOSE setting and other rcS variables
+#[ -f /etc/default/rcS ] && . /etc/default/rcS
+
+# Define LSB log_* functions.
+# Depend on lsb-base (>= 3.0-6) to ensure that this file is present.
+#. /lib/lsb/init-functions
+
+case "$1" in
+  start)
+	# Added init for radioplay
+	[ -x "$usr/local/bin/radioplay" ] && /usr/local/bin/radioplay init
+
+        echo -n "Starting $DESC: "
+        start-stop-daemon --start --quiet --chuid $USERID:$GROUPID \
+                --background --pidfile $PIDFILE --make-pidfile \
+		--exec $DAEMON -- -c $CONFIGFILE  
+        echo "$NAME."
+        ;;
+  stop)
+        echo -n "Stopping $DESC: "
+        start-stop-daemon --stop --oknodo --quiet --exec $DAEMON
+        echo "$NAME."
+        ;;
+  reload|force-reload)
+        echo "Reloading $DESC configuration files."
+        start-stop-daemon --stop --signal 1 --quiet --exec $DAEMON
+        ;;
+  restart)
+	# Added to init radioplay
+	[ -x "$usr/local/bin/radioplay" ] && /usr/local/bin/radioplay init
+
+        echo -n "Restarting $DESC: "
+        start-stop-daemon --stop --oknodo --quiet --exec $DAEMON
+        sleep 1
+        start-stop-daemon --start --verbose --chuid $USERID:$GROUPID \
+                --background --pidfile $PIDFILE --make-pidfile \
+		--exec $DAEMON -- -c $CONFIGFILE 
+        echo "$NAME."
+        ;;
+  *)
+        echo "Usage: $0 {start|stop|restart|reload|force-reload}" >&2
+        exit 1
+        ;;
+esac
+
+exit 0

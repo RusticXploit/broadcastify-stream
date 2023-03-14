@@ -1,0 +1,73 @@
+---
+- name: Add Common Packages
+  apt: pkg={{item}} state=installed
+  with_items:
+       - sox
+       - libsox-fmt-mp3
+       - pulseaudio
+  sudo: True
+  notify: 
+    - reboot
+
+- name: Add Additional Packages
+  apt: pkg={{item}} state=installed install_recommends=no
+  with_items:
+      - build-essential 
+      - devscripts 
+      - autotools-dev 
+      - fakeroot 
+      - dpkg-dev 
+      - debhelper 
+      - autotools-dev 
+      - dh-make 
+      - quilt 
+      - ccache 
+      - libsamplerate0-dev 
+      - libpulse-dev 
+      - libaudio-dev 
+      - lame 
+      - libjack-jackd2-dev 
+      - libasound2-dev 
+      - libtwolame-dev 
+      - libfaad-dev 
+      - libflac-dev 
+      - libmp4v2-dev 
+      - libshout3-dev 
+      - libmp3lame-dev
+      - libopus-dev
+  sudo: True
+  notify: 
+    - reboot
+
+- name: Get Darkice Source
+  raw: apt-get source darkice 
+  sudo: True
+
+- name: Move Darkice
+  command: mv {{ homedirectory }}/darkice-1.3 /root/darkice
+
+- name: Copy Rules File
+  copy: >
+    src=rules
+    dest=/root/darkice/debian/rules
+
+- name: create new version
+  raw: cd /root/darkice && debchange -v 1.3-999~mp3+1 'increment and add mp3 support'
+
+- name: Package new version of Darkice
+  raw: cd /root/darkice && dpkg-buildpackage -rfakeroot -uc -b
+
+- name: Install Darkice
+  raw: dpkg -i /root/darkice_1.3-999~mp3+1_armhf.deb
+
+- name: Copy darkice.cfg file
+  template: src=darkice.cfg.js dest=/etc/darkice.cfg mode=u=rw,g=r,o=r
+
+- name: Copy darkice init 
+  copy: >
+    src=darkice
+    dest=/etc/init.d/darkice
+    mode=u=rwx,g=r,o=r
+
+- name: update startup scripts
+  raw: update-rc.d darkice defaults

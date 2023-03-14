@@ -1,0 +1,19 @@
+---
+- name: Enable deb-src list
+  lineinfile: dest=/etc/apt/sources.list
+              regexp='^deb-src'
+              line='deb-src http://raspbian.raspberrypi.org/raspbian/ buster main contrib non-free rpi'
+              state=present
+  sudo: True
+
+- name: Upgrade APT
+  apt: upgrade=dist
+  notify: reboot
+
+- name: Add Common Packages
+  apt: pkg={{item}} state=installed
+  with_items:
+       - screen
+       - vim
+       - git
+       - npm
